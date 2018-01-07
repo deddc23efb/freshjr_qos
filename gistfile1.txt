@@ -226,7 +226,7 @@ EOF
 
        ########
        # THE CATCH ALL should go at the end of the PRIO 2 custom area		
-       # so that Custom Rules for Unidenitified Trafic are
+       # so that Custom Rules for Unidentified Traffic are
        # are not stolen by the catch-all
        ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 0xc000ffff flowid ${Others}			#Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container		
        ########
@@ -253,7 +253,7 @@ EOF
 
        ########
        # THE CATCH ALL should go at the end of the PRIO 2 custom area		
-       # so that Custom Rules for Unidenitified Trafic are
+       # so that Custom Rules for Unidentified Traffic are
        # are not stolen by the catch-all
        ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 0xc000ffff flowid ${Others}			#Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container		
        ########
