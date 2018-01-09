@@ -84,12 +84,15 @@
 #       FreshJRs install instructions firewall-start should be changed to:
 #       ps w | grep -v grep | grep /jffs/scripts/FreshJR_QOS || sh /jffs/scripts/FreshJR_QOS
 # DEDD: added a log event on script complete.
+# DEDD: First pass of support for both Firmware 380 and Firmware 382.
+# DEDD: Re-added HTTPS filter in custom rules for firmware 380. I don't
+#       know if it's required, I don't use Firmware 380, would be nice 
+#       to check.  Do a tc filter show dev eth0 | grep 0x40130000 to
+#       find it on a Rel 380 system.
 #
 # OUTSTANDING ISSUES
-# DEDD: questions or comments for future work are marked with DEDD
-# DEDD: There is an existing HTTPS filter that I think is no longer
-#       required in v382 - I think ASUS has added - should double check.
-#       Confirmed in 382, may still be reuqired for 380. 
+# DEDD: Assumption is that 380 and 382 will use constant mask values
+#       as the MINOR release number changes.  
 # DEDD: firewall-start is called when QOS is disabled. I'll bet funny things
 #       are happening as a result.  It looks like the br0 filters are still
 #       in place, but the eth0 filters are deleted.  Not sure what that
@@ -98,14 +101,14 @@
 # DEDD: are we counting on eth0 too much as the private side interface?  
 #       how would this extend to VPN services and so on. Something for the 
 #       future?
-# DEDD: No attempt at dynamically figuring out if this script is running
-#       on a 380 vs 382 release
 # DEDD: detect config changes in Custom Rules as well to trigger
 #       tc filter updates.
 # 
 #
 ##################################
-# DEDD:
+
+
+########
 # SET DEBUG to 0 for normal operation, setting it to 1 will enable 
 # verbose debug messages when running from the shell and skip annoying
 # things like updating the crontab and sleeping.
@@ -117,8 +120,11 @@ DEBUG=0
 # ${VOIP}, ${Gaming}, ${Others}, ${Web}, ${Streaming}, ${Downloads}, ${Default}
 #
 # VALID MARKS FOR IPTABLES
-#    ${VOIP_mark}, ${Gaming_mark}, ${Others_mark}, ${Web_mark}, 
-#    ${Streaming_mark}, ${Downloads_mark}, ${Default_mark}
+#    ${VOIP_UP_mark}, ${Gaming_UP_mark}, ${Others_UP_mark}, ${Web_UP_mark}, 
+#    ${Streaming_UP_mark}, ${Downloads_UP_mark}, ${Default_UP_mark}
+#
+#    ${VOIP_DOWN_mark}, ${Gaming_DOWN_mark}, ${Others_DOWN_mark}, ${Web_DOWN_mark}, 
+#    ${Streaming_DOWN_mark}, ${Downloads_DOWN_mark}, ${Default_DOWN_mark}
 #
 # DOWNLOAD/INCOMING TRAFFIC rule templates. 
 #
@@ -222,6 +228,27 @@ DEBUG=0
     Default_UpBandPercent=5 
 #*********************************
 
+ASUS_VER_STRING="$(nvram get buildno)"
+ASUS_MAJOR_REV="$(echo $ASUS_VER_STRING | cut -d. -f1)"
+ASUS_MINOR_REV="$(echo $ASUS_VER_STRING | cut -d. -f2)"
+ASUS_DEFAULT_CAT_FLOWID="1:17"
+
+if [ "${ASUS_MAJOR_REV}" != "380" ] && [ "${ASUS_MAJOR_REV}" != "382" ] ; then
+    logger -t FreshJR_QOS "Error: unsupported ASUS firmware version: ${ASUS_VER_STRING}, script aborting."
+    exit
+fi
+
+if [ "${ASUS_MAJOR_REV}" = "380" ] ; then
+    TC_FLTR_MASK_UNIDENTIFIED_DOWN="0x8000ffff"
+    TC_FLTR_MASK_IDENTIFIED_DOWN="0x803f0000"
+    TC_FLTR_MASK_UNIDENTIFIED_UP="0x4000ffff"
+    TC_FLTR_MASK_IDENTIFIED_UP="0x403f0000"
+elif [ "${ASUS_MAJOR_REV}" = "382" ] ; then
+    TC_FLTR_MASK_UNIDENTIFIED_DOWN="0xc000ffff"
+    TC_FLTR_MASK_IDENTIFIED_DOWN="0xc03f0000"
+    TC_FLTR_MASK_UNIDENTIFIED_UP="0xc000ffff"
+    TC_FLTR_MASK_IDENTIFIED_UP="0xc03f0000"
+fi 
 
 if [ "${DEBUG}" = "0" ] ; then
     # schedules a daily check to see if modifcation is still persistant
@@ -245,7 +272,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
     fi
     
     if [ "${DEBUG}" != "0" ] ; then
-        echo "Examing current container configuration..."
+        echo "Examining current container configuration..."
     fi
 
     # loops through all QOS rules, used to read user order of VOIP
@@ -274,7 +301,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             mark="$(echo ${line} | sed -n -e 's/.*mark \([a-zA-z0-9]* [a-zA-z0-9]*\).*/\1/p')"        
 
             # VOIP
-            if [ "${mark}" = "0x80060000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x80060000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${VoIP_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${VoIP_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -282,7 +309,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Gaming
-            if [ "${mark}" = "0x80080000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x80080000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${Gaming_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${Gaming_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -290,7 +317,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Others
-            if [ "${mark}" = "0x800a0000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x800a0000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${Others_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${Others_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -298,7 +325,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Web Surfing
-            if [ "${mark}" = "0x800d0000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x800d0000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${WebSurfing_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${WebSurfing_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -306,7 +333,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Streaming
-            if [ "${mark}" = "0x80040000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x80040000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${Video_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${Video_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -314,7 +341,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Downloads
-            if [ "${mark}" = "0x80030000 0xc03f0000" ] ; then                         
+            if [ "${mark}" = "0x80030000 ${TC_FLTR_MASK_IDENTIFIED_DOWN}" ] ; then                         
                 eval "Cat${flowid}DownBandPercent=${FileTransfer_DownBandPercent}"
                 eval "Cat${flowid}UpBandPercent=${FileTransfer_UpBandPercent}"
                 # Use this variable for custom QOS rule flowID (case sensitive)
@@ -322,7 +349,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
             fi
             
             # Default (Unidentified traffic)
-            if [ "${mark}" = "0x80000000 0xc000ffff" ] ; then                         
+            if [ "${mark}" = "0x80000000 ${TC_FLTR_MASK_UNIDENTIFIED_DOWN}" ] ; then                         
                 # Use this variable for custom QOS rule flowID (case sensitive)
                 Default="1:1${flowid}"                                        
             fi
@@ -353,9 +380,8 @@ EOF
     
     ######## Unidentified Traffic Priority & Custom Rules ########    
 
-    if [ "${Default}" = "1:17" ] ; then
-        logger -t FreshJR_QOS "Adaptive QOS: Changing container for\
-                               Unidentified Traffic & Applying Custom Rules"
+    if [ "${Default}" = "${ASUS_DEFAULT_CAT_FLOWID}" ] ; then
+        logger -t FreshJR_QOS "Adaptive QOS: Changing containers for Unidentified Traffic & Applying Custom Rules"
 
         # Use these Marks in iptables rules. They will match existing
         # tc filters to treat the packets appropriately.
@@ -364,22 +390,22 @@ EOF
         # caught by unidentified mask
         #
         # Upstream Marks
-        VOIP_mark="0x40060001"            
-        Gaming_mark="0x40080001"
-        Others_mark="0x400a0001"
-        Web_mark="0x400d0001"
-        Streaming_mark="0x40040001"
-        Downloads_mark="0x40030001"
-        Default_mark="0x40000001"
+        VOIP_UP_mark="0x40060001"            
+        Gaming_UP_mark="0x40080001"
+        Others_UP_mark="0x400a0001"
+        Web_UP_mark="0x400d0001"
+        Streaming_UP_mark="0x40040001"
+        Downloads_UP_mark="0x40030001"
+        Default_UP_mark="0x40000001"
 
         # Downstream Marks
-        VOIP_mark="0x80060001"            
-        Gaming_mark="0x80080001"
-        Others_mark="0x800a0001"
-        Web_mark="0x800d0001"
-        Streaming_mark="0x80040001"
-        Downloads_mark="0x80030001"
-        Default_mark="0x80000001"
+        VOIP_DOWN_mark="0x80060001"            
+        Gaming_DOWN_mark="0x80080001"
+        Others_DOWN_mark="0x800a0001"
+        Web_DOWN_mark="0x800d0001"
+        Streaming_DOWN_mark="0x80040001"
+        Downloads_DOWN_mark="0x80030001"
+        Default_DOWN_mark="0x80000001"
 
         ####################  Custom Rules Setup #####################
         # DOWNLOAD (INCOMING TRAFFIC) CUSTOM RULES START HERE
@@ -394,7 +420,7 @@ EOF
         # CUSTOM TRAFFIC CLASSIFICATION RULES: 
 
         ########
-        # DOWNLOAD (INCOMING TRAFFIC) CUSTOM RULES START HERE                                                
+        # DOWNLOAD (INCOMING TRAFFIC) EXAMPLES
         #
         # Wifi Calling
         #   (All incoming traffic w/ LAN destination port 500 goes to
@@ -411,14 +437,7 @@ EOF
         #   goes to "VOIP" Traffic Container) 
         #   ${tc} filter add dev br0 protocol all prio 1 u32 match ip dport 16384 0xffe0 flowid ${VOIP}                
         #
-        # DEDD: Not certain this filter is required.  I see this in my 382
-        # default config on reset. May need it for 380.
-        #
-        # https traffic 
-        #   (rule missing from ASUS default rule set)
-        #   ${tc} filter add dev br0 protocol all prio 15 u32 match mark 0x80130000 0xc03f0000 flowid ${Web}        
-        #
-        ## VOIP device downloads by ip address
+        # VOIP device downloads by ip address
         #   ${tc} filter add dev br0 protocol all prio 2 u32 match ip dst 192.168.2.42/32 flowid ${VOIP} 
         #
         # Bittorrent VM downloads by ip address
@@ -432,6 +451,15 @@ EOF
         #*********************************
 
         ########
+        # https traffic 
+        #   Rule missing from ASUS default rule set in original 380 Firmware.
+        #   Not required in 382.
+        if [ "${ASUS_MAJOR_VER}" = "380" ] ; then
+            ${tc} filter add dev br0 protocol all prio 15 u32 match mark 0x80130000 ${TC_FLTR_MASK_IDENTIFIED_DOWN} flowid ${Web}        
+        fi
+        ########
+
+        ########
         # THE CATCH-ALL should go at the end of the PRIO 2 custom area        
         # so that Custom Rules for Unidenitified Trafic are
         # are not stolen by the catch-all
@@ -440,7 +468,7 @@ EOF
         # container which is user adjustable in webUI, instead of default
         # routing of traffic into non-adjustable "Default" traffic
         # container        
-        ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 0xc000ffff flowid ${Others}
+        ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 ${TC_FLTR_MASK_UNIDENTIFIED_DOWN} flowid ${Others}
         ########
 
         ########
@@ -453,8 +481,7 @@ EOF
         ${tc} filter del dev eth0 parent 1: prio 2 
 
         ########
-        # CUSTOM RULES: 
-        # UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES START HERE                                                
+        # UPLOAD (OUTGOING TRAFFIC) EXAMPLES
         #
         # Wifi Calling    
         #   (All outgoing traffic w/ LAN source port 500 goes to "VOIP"
@@ -474,22 +501,17 @@ EOF
         #    ${tc} filter add dev eth0 protocol all prio 2 u32 match ip\
         #    sport 16384 0xffe0 flowid ${VOIP}            
         #
-        # DEDD: Not certain this is required. I see this in my default config on reset.
-        # https traffic    
-        #   (rule missing from ASUS default rule set)
-        #    ${tc} filter add dev eth0 protocol all prio 15 u32 match mark 0x40130000 0xc03f0000 flowid ${Web}        
-        #
         # Note iptables must be used with IP address based matching in the upstream direction
         #   When using IPTables marking, use appropriate
         #   upstream/downstream mark for the traffic as described above.
         #
         # VOIP device
-        # iptables -D POSTROUTING -t mangle -o eth0 -s 192.168.2.42/32 -j MARK --set-mark ${VOIP_mark}
-        # iptables -A POSTROUTING -t mangle -o eth0 -s 192.168.2.42/32 -j MARK --set-mark ${VOIP_mark}
+        # iptables -D POSTROUTING -t mangle -o eth0 -s 192.168.2.42/32 -j MARK --set-mark ${VOIP_UP_mark}
+        # iptables -A POSTROUTING -t mangle -o eth0 -s 192.168.2.42/32 -j MARK --set-mark ${VOIP_UP_mark}
         #
         # Bittorrent VM
-        # iptables -D POSTROUTING -t mangle -o eth0 -s 192.168.2.35/32 -j MARK --set-mark ${Downloads_mark}
-        # iptables -A POSTROUTING -t mangle -o eth0 -s 192.168.2.35/32 -j MARK --set-mark ${Downloads_mark}
+        # iptables -D POSTROUTING -t mangle -o eth0 -s 192.168.2.35/32 -j MARK --set-mark ${Downloads_UP_mark}
+        # iptables -A POSTROUTING -t mangle -o eth0 -s 192.168.2.35/32 -j MARK --set-mark ${Downloads_UP_mark}
         ########
 
         #*********************************
@@ -498,6 +520,16 @@ EOF
         # tc filter......
         # iptables....
         #*********************************
+
+    
+        ########
+        # https traffic 
+        #   Rule missing from ASUS default rule set in original 380 Firmware.
+        #   Not required in 382.
+        if [ "${ASUS_MAJOR_VER}" = "380" ] ; then
+            ${tc} filter add dev eth0 protocol all prio 15 u32 match mark 0x40130000 ${TC_FLTR_MASK_IDENTIFIED_UP} flowid ${Web}        
+        fi
+        ########
 
         ########
         # THE CATCH-ALL should go at the end of the PRIO 2 custom area        
@@ -508,12 +540,11 @@ EOF
         # container which is user adjustable in webUI, instead of default
         # routing of traffic into non adjustable "Default" traffic
         # container        
-        ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 0xc000ffff flowid ${Others}            
+        ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 ${TC_FLTR_MASK_UNIDENTIFIED_UP} flowid ${Others}            
         ########
 
     else
-        logger -t FreshJR_QOS "Adaptive QOS: No change required for \
-                        Unidentified Traffic Container or Custom Rules"
+        logger -t FreshJR_QOS "Adaptive QOS: No change required for Unidentified Traffic Container or Custom Rules"
         if [ "${DEBUG}" != "0" ] ; then
             echo "No changes for Adaptive QOS Container Priority required."
         fi
@@ -551,12 +582,10 @@ EOF
     # DEDD: Is this test sufficient?  It tests one class for change,
     # but not all. Seems weak to me. Something better needed?
     if [ "${CurrentDownRate1}" != "${DownRate1}" ] ; then
-        logger -t FreshJR_QOS "Adaptive QOS: Changing minimum alloted \
-                bandwidth per QOS category to user defined percentages"
+        logger -t FreshJR_QOS "Adaptive QOS: Changing minimum alloted bandwidth per QOS category to user defined percentages"
 
         if [ "${DEBUG}" != "0" ] ; then
-            echo "Changes required for bw percentages: \
-                    ${CurrentDownRate1} != ${DownRate1}"
+            echo "Changes required for bw percentages: ${CurrentDownRate1} != ${DownRate1}"
         fi
 
         # DEDD: assuming that the trailing Kbit and b are ALWAYS that.
@@ -629,6 +658,9 @@ EOF
             echo "Skipping bw changes: No changes required for bw percentages: ${CurrentDownRate1} == ${DownRate1}"
         fi
     fi
-fi
 
-logger -t FreshJR_QOS "Adaptive QOS: Done."
+    ### script complete
+    logger -t FreshJR_QOS "Adaptive QOS: Done."
+else
+    logger -t FreshJR_QOS "Adaptive QOS: Nothing to do, Adaptive QOS not enabled."
+fi
