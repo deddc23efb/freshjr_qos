@@ -1,4 +1,7 @@
- This script is based on FreshJR's (www.snbforums.com) work on the ASUS
+FreshJR_QOS ASUS Adaptive QOS enhancements:
+Forked from FreshJR_QOS v1.92 released 09/07/2017 
+
+This script is based on FreshJR's (www.snbforums.com) work on the ASUS
  Adaptive QOS FreshJR_QOS script. This script adds user control to the
  ASUS Adaptive QOS infrastructure.
 
@@ -24,8 +27,6 @@
    categorization in a users network.
 
  This script addresses all of these problems.
-
- Forked from FreshJR_QOS v1.92 released 09/07/2017 
 
  INSTALL:
    1) copy this file to /jffs/scripts/FreshJR_QOS
