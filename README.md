@@ -1,6 +1,8 @@
 FreshJR_QOS ASUS Adaptive QOS enhancements:
 Forked from FreshJR_QOS v1.92 released 09/07/2017 
 
+OVERVIEW:
+
 This script is based on FreshJR's (www.snbforums.com) work on the ASUS
  Adaptive QOS FreshJR_QOS script. This script adds user control to the
  ASUS Adaptive QOS infrastructure.
@@ -29,6 +31,7 @@ This script is based on FreshJR's (www.snbforums.com) work on the ASUS
  This script addresses all of these problems.
 
  INSTALL:
+ 
    1) copy this file to /jffs/scripts/FreshJR_QOS
    2) chmod 755 /jffs/scripts/FreshJR_QOS
    3) add the following line to the end of /jffs/scripts/firewall-start
@@ -37,6 +40,7 @@ This script is based on FreshJR's (www.snbforums.com) work on the ASUS
    run.
    
  CUSTOMIZE:
+ 
    The script will by default upate the tc filters to categorize
    unidentified traffic the same as "Others" in the ASUS QOS Config UI.
    There are two additional configurations available in this script:
