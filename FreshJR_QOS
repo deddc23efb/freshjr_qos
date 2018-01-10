@@ -243,6 +243,8 @@ if [ "${ASUS_MAJOR_REV}" = "380" ] ; then
     TC_FLTR_MASK_IDENTIFIED_DOWN="0x803f0000"
     TC_FLTR_MASK_UNIDENTIFIED_UP="0x4000ffff"
     TC_FLTR_MASK_IDENTIFIED_UP="0x403f0000"
+    # temporary until we get 380 support nailed down:
+    logger -t FreshJR_QOS "Error: support for ASUS firmware version 380.x not ready, script aborting."
 elif [ "${ASUS_MAJOR_REV}" = "382" ] ; then
     TC_FLTR_MASK_UNIDENTIFIED_DOWN="0xc000ffff"
     TC_FLTR_MASK_IDENTIFIED_DOWN="0xc03f0000"
