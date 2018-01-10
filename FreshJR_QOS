@@ -90,21 +90,6 @@
 #       to check.  Do a tc filter show dev eth0 | grep 0x40130000 to
 #       find it on a Rel 380 system.
 #
-# OUTSTANDING ISSUES
-# DEDD: Assumption is that 380 and 382 will use constant mask values
-#       as the MINOR release number changes.  
-# DEDD: firewall-start is called when QOS is disabled. I'll bet funny things
-#       are happening as a result.  It looks like the br0 filters are still
-#       in place, but the eth0 filters are deleted.  Not sure what that
-#       means for traffic performance. I think ASUS has a bug here. Toggling QOS 
-#       on and off over and over keeps adding redundant filters to br0.
-# DEDD: are we counting on eth0 too much as the private side interface?  
-#       how would this extend to VPN services and so on. Something for the 
-#       future?
-# DEDD: detect config changes in Custom Rules as well to trigger
-#       tc filter updates.
-# 
-#
 ##################################
 
 
