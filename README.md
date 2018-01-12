@@ -1,54 +1,27 @@
-FreshJR_QOS ASUS Adaptive QOS enhancements:
-Forked from FreshJR_QOS v1.92 released 09/07/2017 
+FreshJR_QOS
+##FreshJR_QOS v382 released 01/10/2017
 
-OVERVIEW:
+original reference: https://pastebin.com/5nMP45ev
 
-This script is based on FreshJR's (www.snbforums.com) work on the ASUS
- Adaptive QOS FreshJR_QOS script. This script adds user control to the
- ASUS Adaptive QOS infrastructure.
+FreshJR's Install Instructions:
+Open putty. Hostname is router ip. Port is 22. Connection Type SSH. Click open. Type in Password.
 
- The current script is an extension of FreshJR's original work that
- supports updated versions of ASUS router software versions 380 and beyond.
+If firewall-start is not yet properly formatted, or has never been formatted, then run the following.
+The file, firewall-start, will NOT be properly formatted if you do not have any scripts installed into it.
+Run this command first to properly delete/format the firewall-start file.
+Code:
+-----CAUTION READ NOTES-----
+echo "#!/bin/sh" > /jffs/scripts/firewall-start
+-----CAUTION READ NOTES-----
+NOTE: This will delete firewall-start and create a new one with a proper header. Do not use if firewall start is already properly formatted and you have other scripts working.
 
- The script is designed to run based on firewall-start events that trigger
- the script stored on standard jffs storage on a router.
+​
+When firewall-start is properly formatted then run the following commands to complete the install:
 
- The basic function of the script is accomplished by modifying the linux
- traffic control rules (tc) setup by ASUS and the Trend Micro DPI engine.  
- 
- The script addresses several deficiencies in the ASUS implementation:
-   1) traffic that is unrecognized by the Trend Micro DPI is categorized
-   into the Default traffic container (lowest of the low priority -
-   non-configurable.) This affects many applications ... VPN, gaming,
-   obfuscated traffic etc...
-
-   2) No user configurable control over bandwidth allocation for traffic
-   containers. 
-
-   3) No facility to configure custom rules to adjust or improve traffic
-   categorization in a users network.
-
- This script addresses all of these problems.
-
- INSTALL:
- 
-   1) copy this file to /jffs/scripts/FreshJR_QOS
-   2) chmod 755 /jffs/scripts/FreshJR_QOS
-   3) add the following line to the end of /jffs/scripts/firewall-start
-   ps w | grep -v grep | grep /jffs/scripts/FreshJR_QOS || sh /jffs/scripts/FreshJR_QOS
-   4) enable Adaptive QOS (or Toggle Adaptive QoS) to trigger a script
-   run.
-   
- CUSTOMIZE:
- 
-   The script will by default upate the tc filters to categorize
-   unidentified traffic the same as "Others" in the ASUS QOS Config UI.
-   There are two additional configurations available in this script:
-   1) Bandwidth Allocation per QOS Category:
-      Adjust the bandwidth percentage allocation for each QOS Class below.
-      Search for USER CUSTOMIZATION - BANDWIDTH ALLOCATION
-   2) Upload and Download Custom traffic filter rules:
-      Custom traffic filter rules for both upload and download can be
-      configured (within the limits of iptables and tc.) Search for USER
-      CUSTOMIZATION - UPLOAD RULES or USER CUSTOMIZATION - DOWNLOAD RULES. freshjr_qos
-
+Paste these three commands, one by one, from clipboard by right clicking into putty to install the script.
+Code:
+echo "/jffs/scripts/FreshJR_QOS" >> /jffs/scripts/firewall-start
+chmod 755 /jffs/scripts/firewall-start
+chmod 755 /jffs/scripts/FreshJR_QOS
+Just a linux FYI: The two echo commands used above are slightly different from each other.
+Echo with > = overwrites and echo with >> = appends
