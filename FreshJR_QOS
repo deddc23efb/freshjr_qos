@@ -47,7 +47,7 @@ Check_Lock () {
 Check_Lock "$@"
  
 if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; then
-    logger "Adaptive QOS: Modification Script Started"
+    logger -st "Adaptive QOS" "[INFO] Modification Script Started"
     sleep 180    
  
     if [ -e "/usr/sbin/realtc" ] ; then
@@ -142,7 +142,7 @@ EOF
    
      
     if [ "${Default}" != "1:117" ] ; then
-        logger "Adaptive QOS: Changing container for Unidentified Traffic & Applying Custom Rules"
+        logger -st "Adaptive QOS" "[INFO] Changing container for Unidentified Traffic & Applying Custom Rules"
  
         VOIP_mark="0x40060001"          #Note these marks are same as filter match/mask combo but have a 1 at the end.  That trailing one prevents the filters from being caught by unidentified mask
         Gaming_mark="0x40080001"
@@ -197,7 +197,7 @@ EOF
         UpRate7="$(expr ${UpCeil} \* ${Cat7UpBandPercent} / 100)"
        
  
-        logger "Adaptive QOS: Changing minimum alloted bandwidth per QOS category to user defined percentages"
+        logger -st "Adaptive QOS" "[INFO] Changing minimum alloted bandwidth per QOS category to user defined percentages"
  
             #read existing burst/cburst per download QOS class
             while read -r line;                                                                        
@@ -310,8 +310,12 @@ EOF
         tc class change dev eth0 parent 1:1 classid 1:16 htb prio 6 rate ${UpRate6}Kbit ceil ${UpCeil}Kbit burst ${UpBurst6} cburst ${UpCburst6}
         tc class change dev eth0 parent 1:1 classid 1:17 htb prio 7 rate ${UpRate7}Kbit ceil ${UpCeil}Kbit burst ${UpBurst7} cburst ${UpCburst7}
     else
-        logger "Adaptive QOS: No change required for QOS category bandwidth percentages"
+        logger -st "Adaptive QOS" "[INFO] No change required for QOS category bandwidth percentages"
     fi
+
+    logger -st "Adaptive QOS" "[INFO] Done."
+else
+    logger -st "Adaptive QOS" "[INFO] Nothing to do, QOS not enabled."
 fi 
  
 rm -rf /tmp/qos.lock
