@@ -4,7 +4,6 @@ FreshJR_QOS
 original reference: https://pastebin.com/5nMP45ev
 
 FreshJR's Install Instructions:
-<verbatim>
 Open putty. Hostname is router ip. Port is 22. Connection Type SSH. Click open. Type in Password.
 
 If firewall-start is not yet properly formatted, or has never been formatted, then run the following.
@@ -26,4 +25,3 @@ chmod 755 /jffs/scripts/firewall-start
 chmod 755 /jffs/scripts/FreshJR_QOS
 Just a linux FYI: The two echo commands used above are slightly different from each other.
 Echo with > = overwrites and echo with >> = appends
-</verbatim>
