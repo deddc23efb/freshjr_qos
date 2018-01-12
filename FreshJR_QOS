@@ -218,8 +218,20 @@ ASUS_MAJOR_REV="$(echo $ASUS_VER_STRING | cut -d. -f1)"
 ASUS_MINOR_REV="$(echo $ASUS_VER_STRING | cut -d. -f2)"
 ASUS_DEFAULT_CAT_FLOWID="1:17"
 
+Check_Lock () {
+        if [ -f "/tmp/qos.lock" ] && [ -d "/proc/$(sed -n '2p' /tmp/qos.lock)" ]; then
+            logger -st "Adaptive QOS" "[INFO] Lock File Detected from pid=$(sed -n '2p' /tmp/qos.lock) - Exiting Duplicate Instance"
+            exit 1
+        else
+            echo "$@" > /tmp/qos.lock
+            echo "$$" >> /tmp/qos.lock
+        fi
+}
+ 
+Check_Lock "$@"
+
 if [ "${ASUS_MAJOR_REV}" != "380" ] && [ "${ASUS_MAJOR_REV}" != "382" ] ; then
-    logger -t FreshJR_QOS "Error: unsupported ASUS firmware version: ${ASUS_VER_STRING}, script aborting."
+    logger -st "Adaptive QOS" "Error: unsupported ASUS firmware version: ${ASUS_VER_STRING}, script aborting."
     exit
 fi
 
@@ -229,7 +241,7 @@ if [ "${ASUS_MAJOR_REV}" = "380" ] ; then
     TC_FLTR_MASK_UNIDENTIFIED_UP="0x4000ffff"
     TC_FLTR_MASK_IDENTIFIED_UP="0x403f0000"
     # temporary until we get 380 support nailed down:
-    logger -t FreshJR_QOS "Error: support for ASUS firmware version 380.x not ready, script aborting."
+    logger -st "Adaptive QOS" "Error: support for ASUS firmware version 380.x not ready, script aborting."
 elif [ "${ASUS_MAJOR_REV}" = "382" ] ; then
     TC_FLTR_MASK_UNIDENTIFIED_DOWN="0xc000ffff"
     TC_FLTR_MASK_IDENTIFIED_DOWN="0xc03f0000"
@@ -244,7 +256,7 @@ fi
 
 # dont bother running if adaptive qos is not configured.
 if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; then
-    logger -t FreshJR_QOS "Adaptive QOS: Modification Script Started"
+    logger -st "Adaptive QOS" "Adaptive QOS: Modification Script Started"
 
     if [ "${DEBUG}" = "0" ] ; then
         sleep 60     
@@ -368,7 +380,7 @@ EOF
     ######## Unidentified Traffic Priority & Custom Rules ########    
 
     if [ "${Default}" = "${ASUS_DEFAULT_CAT_FLOWID}" ] ; then
-        logger -t FreshJR_QOS "Adaptive QOS: Changing containers for Unidentified Traffic & Applying Custom Rules"
+        logger -st "Adaptive QOS" "Adaptive QOS: Changing containers for Unidentified Traffic & Applying Custom Rules"
 
         # Use these Marks in iptables rules. They will match existing
         # tc filters to treat the packets appropriately.
@@ -531,7 +543,7 @@ EOF
         ########
 
     else
-        logger -t FreshJR_QOS "Adaptive QOS: No change required for Unidentified Traffic Container or Custom Rules"
+        logger -st "Adaptive QOS" "Adaptive QOS: No change required for Unidentified Traffic Container or Custom Rules"
         if [ "${DEBUG}" != "0" ] ; then
             echo "No changes for Adaptive QOS Container Priority required."
         fi
@@ -569,7 +581,7 @@ EOF
     # DEDD: Is this test sufficient?  It tests one class for change,
     # but not all. Seems weak to me. Something better needed?
     if [ "${CurrentDownRate1}" != "${DownRate1}" ] ; then
-        logger -t FreshJR_QOS "Adaptive QOS: Changing minimum alloted bandwidth per QOS category to user defined percentages"
+        logger -st "Adaptive QOS" "Adaptive QOS: Changing minimum alloted bandwidth per QOS category to user defined percentages"
 
         if [ "${DEBUG}" != "0" ] ; then
             echo "Changes required for bw percentages: ${CurrentDownRate1} != ${DownRate1}"
@@ -640,14 +652,14 @@ EOF
         tc class change dev eth0 parent 1:1 classid 1:16 htb prio 6 rate ${UpRate6}Kbit ceil ${UpCeil}Kbit burst ${UpBurst} cburst ${UpCburst}
         tc class change dev eth0 parent 1:1 classid 1:17 htb prio 7 rate ${UpRate7}Kbit ceil ${UpCeil}Kbit burst ${UpBurst} cburst ${UpCburst}
     else
-        logger -t FreshJR_QOS "Adaptive QOS: No change required for QOS category bandwidth percentages"
+        logger -st "Adaptive QOS" "Adaptive QOS: No change required for QOS category bandwidth percentages"
         if [ "${DEBUG}" != "0" ] ; then
             echo "Skipping bw changes: No changes required for bw percentages: ${CurrentDownRate1} == ${DownRate1}"
         fi
     fi
 
     ### script complete
-    logger -t FreshJR_QOS "Adaptive QOS: Done."
+    logger -st "Adaptive QOS" "Adaptive QOS: Done."
 else
-    logger -t FreshJR_QOS "Adaptive QOS: Nothing to do, Adaptive QOS not enabled."
+    logger -st "Adaptive QOS" "Adaptive QOS: Nothing to do, Adaptive QOS not enabled."
 fi
