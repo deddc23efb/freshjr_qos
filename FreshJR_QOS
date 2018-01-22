@@ -1,12 +1,12 @@
 #!/bin/sh
-##FreshJR_QOS v382 released 01/10/2017
+##FreshJR_QOS v382.3 released 01/18/2017
 ##Script Tested on ASUS AC-68U, FW382.2, using Adaptive QOS with Manual Bandwidth Settings
 ##Script Changes Unidentified Packet QOS destination from Default Traffic Container (Category7) into user definable (in WebUI) Other Traffic Container
 ##Script Changes Minimum Guarenteed Bandwidth per QOS category from 128Kbit into user defined percentages upload and download.
-##Script supports custom QOS rules, to create rules copy applicable rule templates below, change filter parameters as desried, and then paste into custom rule start area.
-##  Included custom rule moves any TCP/UDP traffic on ports 500 & 4500 into VOIP traffic Container.         (Wifi Calling)                 
-##  Included custom rule moves any TCP/UDP traffic on ports 16384 - 16415 into VOIP traffic Container.      (Facetime)                 
- 
+##Script supports custom QOS rules, to create rules copy applicable rule templates below, change filter parameters as desried, and then paste into custom rule start area. 
+##  Included custom rule moves any TCP/UDP traffic on ports 500 & 4500 into VOIP traffic Container.         (Wifi Calling)                  
+##  Included custom rule moves any TCP/UDP traffic on ports 16384 - 16415 into VOIP traffic Container.      (Facetime)                  
+
 #---------------------------------------------------------------------------------------------------------------
 #   VALID FLOW ID'S FOR CUSTOM RULES
 #    ${VOIP}, ${Gaming}, ${Others}, ${Web}, ${Streaming}, ${Downloads}, ${Default}
@@ -16,24 +16,24 @@
 #
 #   DOWNLOAD/INCOMMING TRAFFIC rule templates.  See comments next to rule for details
 #    ${tc} filter add dev br0 protocol all prio 1 u32 match ip dport 1234 0xffff flowid ${Downloads}            #Template Rule 1 (All incomming traffic w/ LAN destination port 1234                        goes to "Downloads" Traffic Container)                                      (0xFFFF port mask defines only one port, if port range is desired see SNB forum post for guide)
-#    ${tc} filter add dev br0 protocol all prio 1 u32 match ip dst 192.168.1.100/32 flowid ${VOIP}              #Template Rule 2 (All incomming traffic w/ LAN destination ip 192.168.1.100                 goes to "VOIP" Traffic Container)                                          
+#    ${tc} filter add dev br0 protocol all prio 1 u32 match ip dst 192.168.1.100/32 flowid ${VOIP}              #Template Rule 2 (All incomming traffic w/ LAN destination ip 192.168.1.100                 goes to "VOIP" Traffic Container)                                           
 #    ${tc} filter add dev br0 protocol all prio 1 u32 match u32 0xCCDDEEFF 0xffffffff at -16 flowid {VOIP}      #Template Rule 3 (All incomming traffic w/ LAN destination MAC Address AA:BB:CC:DD:EE:FF    goes to "VOIP" Traffic Container)                                           **RULE USES LAST 8 MAC DIGITS
-#    ${tc} filter add dev br0 protocol all prio 1 u32 match ip src 75.75.75.75/32 flowid ${Streaming}           #Template Rule 4 (All incomming traffic w/ WAN server source ip 75.75.75.75                 goes to "Streaming" Traffic Container)                                      (/32 CIDR mask defines only one ip, if IP range is desired see SNB forum post for guide)                                                                               
+#    ${tc} filter add dev br0 protocol all prio 1 u32 match ip src 75.75.75.75/32 flowid ${Streaming}           #Template Rule 4 (All incomming traffic w/ WAN server source ip 75.75.75.75                 goes to "Streaming" Traffic Container)                                      (/32 CIDR mask defines only one ip, if IP range is desired see SNB forum post for guide)                                                                                
 #
 #   UPLOAD/OUTOING TRAFFIC rule templates.      See comments next to rule for details
 #    ${tc} filter add dev eth0 protocol all prio 1 u32 match ip sport 1234 0xffff flowid ${Downloads}           #Template Rule 1                                              (All outgoing traffic w/ LAN source port 1234                     goes to "Downloads" Traffic Container)      (0xFFFF port mask defines only one port, if port range is desired see SNB forum post for guide)
-#    ${tc} filter add dev eth0 protocol all prio 1 u32 match ip src 192.168.1.100/32 flowid ${VOIP}             #Template Rule 2 -->NOT WORKING/USE IPTABLES ALTERNATIVE<--   (All outgoing traffic w/ LAN source ip 192.168.1.123              goes to "VOIP" Traffic Container)           **Reason this does not work is because you can only apply filters to egress traffic.  The egress source IP of outgoing traffic is your Public WAN IP, not your Local LAN IP.  So filter will not match on local IP.                                
-#    ${tc} filter add dev eth0 protocol all prio 1 u32 match u16 0xEEFF 0xffff  at -8 flowid {VOIP}             #Template Rule 3 -->NOT WORKING/USE IPTABLES ALTERNATIVE<--   (All outgoing traffic w/ LAN source MAC Address AA:BB:CC:DD:EE:FF goes to "VOIP" Traffic Container)           **RULE USES LAST 4 MAC DIGITS           **Reason this does not work is because you can only apply filters to egress traffic.  The egress source MAC ADDRESS of outgoing traffic is your Router MAC ADDRESS, not your client MAC ADDRESS.  So filter will not match on local MAC ADDRESS.   
-#    ${tc} filter add dev eth0 protocol all prio 1 u32 match ip dst 75.75.75.75/32 flowid ${Streaming}          #Template Rule 4                                              (All outgoing traffic w/ WAN server destination ip 75.75.75.75    goes to "Streaming" Traffic Container)                                  (/32 CIDR mask defines only one ip, if IP range is desired see SNB forum post for guide)                                                                                                       
-#  
+#    ${tc} filter add dev eth0 protocol all prio 1 u32 match ip src 192.168.1.100/32 flowid ${VOIP}             #Template Rule 2 -->NOT WORKING/USE IPTABLES ALTERNATIVE<--   (All outgoing traffic w/ LAN source ip 192.168.1.123              goes to "VOIP" Traffic Container)           **Reason this does not work is because you can only apply filters to egress traffic.  The egress source IP of outgoing traffic is your Public WAN IP, not your Local LAN IP.  So filter will not match on local IP.                                 
+#    ${tc} filter add dev eth0 protocol all prio 1 u32 match u16 0xEEFF 0xffff  at -8 flowid {VOIP}             #Template Rule 3 -->NOT WORKING/USE IPTABLES ALTERNATIVE<--   (All outgoing traffic w/ LAN source MAC Address AA:BB:CC:DD:EE:FF goes to "VOIP" Traffic Container)           **RULE USES LAST 4 MAC DIGITS           **Reason this does not work is because you can only apply filters to egress traffic.  The egress source MAC ADDRESS of outgoing traffic is your Router MAC ADDRESS, not your client MAC ADDRESS.  So filter will not match on local MAC ADDRESS.    
+#    ${tc} filter add dev eth0 protocol all prio 1 u32 match ip dst 75.75.75.75/32 flowid ${Streaming}          #Template Rule 4                                              (All outgoing traffic w/ WAN server destination ip 75.75.75.75    goes to "Streaming" Traffic Container)                                  (/32 CIDR mask defines only one ip, if IP range is desired see SNB forum post for guide)                                                                                                        
+#   
 #    iptables -D POSTROUTING -t mangle -o eth0 -s 192.168.1.100/32 -j MARK --set-mark ${VOIP_mark}                      #Template Rule 2 WORKING ALTERNATIVE (Line1/2)
 #    iptables -A POSTROUTING -t mangle -o eth0 -s 192.168.1.100/32 -j MARK --set-mark ${VOIP_mark}                      #Template Rule 2 WORKING ALTERNATIVE (Line1/2)
 #    iptables -D POSTROUTING -t mangle -o eth0 -m mac --mac-source AA:BB:CC:DD:EE:FF -j MARK --set-mark ${VOIP_mark}    #Template Rule 3 WORKING ALTERNATIVE (Line1/2)
 #    iptables -A POSTROUTING -t mangle -o eth0 -m mac --mac-source AA:BB:CC:DD:EE:FF -j MARK --set-mark ${VOIP_mark}    #Template Rule 3 WORKING ALTERNATIVE (Line1/2)
-#---------------------------------------------------------------------------------------------------------------       
- 
+#---------------------------------------------------------------------------------------------------------------        
+
 cru a FreshJR_QOS "0 0 * * * /jffs/scripts/FreshJR_QOS"     ## schedules a daily check to see if modifcation is still persistant
- 
+
 Check_Lock () {
         if [ -f "/tmp/qos.lock" ] && [ -d "/proc/$(sed -n '2p' /tmp/qos.lock)" ]; then
             logger -st "Adaptive QOS" "[INFO] Lock File Detected from pid=$(sed -n '2p' /tmp/qos.lock) - Exiting Duplicate Instance"
@@ -43,21 +43,21 @@ Check_Lock () {
             echo "$$" >> /tmp/qos.lock
         fi
 }
- 
+
 Check_Lock "$@"
- 
+
 if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; then
     logger -st "Adaptive QOS" "[INFO] Modification Script Started"
     sleep 180    
- 
-    if [ -e "/usr/sbin/realtc" ] ; then
+
+    if [ -e "/usr/sbin/realtc" ] ; then 
         tc="realtc"
     else
         tc="tc"
     fi
-   
+    
     ####################  Variables Setup #####################
- 
+
     #Percent of download speed guaranteed per QOS catagory, change below as desired (sum should equal 100)
         NetControl_DownBandPercent=5                    #This value can be adjust as desired
         VoIP_DownBandPercent=20                         #This value can be adjust as desired
@@ -67,7 +67,7 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
         Video_DownBandPercent=30                        #This value can be adjust as desired
         FileTransfer_DownBandPercent=5                  #This value can be adjust as desired
         Default_DownBandPercent=5                       #This value can be adjust as desired        #Note: Original destination all for unidentified traffic, no traffic should flow here
-   
+    
     #Percent of upload speed guaranteed per QOS catagory, change below as desired (sum should equal 100)
         NetControl_UpBandPercent=5                      #This value can be adjust as desired
         VoIP_UpBandPercent=20                           #This value can be adjust as desired
@@ -77,73 +77,73 @@ if [ "$(nvram get qos_enable)" = "1" ] && [ "$(nvram get qos_type)" = "1" ] ; th
         Video_UpBandPercent=10                          #This value can be adjust as desired
         FileTransfer_UpBandPercent=5                    #This value can be adjust as desired
         Default_UpBandPercent=5                         #This value can be adjust as desired        #Note: Original destination all for unidentified traffic, no traffic should flow here
-   
-   
+    
+    
     while read -r line;                                                                         #reads all QOS rules, used to read user order of contianers
     do
-            flowid="$( echo -n ${line} | sed -n -e 's/.*flowid //p' | tail -c 1)"               #check if individual rule line output has valid flowID which would then correspond to an individual rules Traffic Container / Catagory / Flowid.
+            flowid="$( echo -n ${line} | sed -n -e 's/.*flowid //p' | tail -c 1)"               #check if individual rule line output has valid flowID which would then correspond to an individual rules Traffic Container / Catagory / Flowid. 
             if [ "${flowid}" != "" ] ; then                                                     #if valid flowID is found, read next line.  
-                    read line                                                                  
+                    read line                                                                   
                     mark="$(echo ${line} | sed -n -e 's/.*mark \([a-zA-z0-9]* [a-zA-z0-9]*\).*/\1/p')"      #This line reads which individual QOS traffic rule / mark corresponds to the Traffic Container / Catagory / Flowid read in the previous line
                                            
- 
+
                     if [ "${mark}" = "0x80060000 0xc03f0000" ] ; then                       #VOIP
                         eval "Cat${flowid}DownBandPercent=${VoIP_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${VoIP_UpBandPercent}"
                         VOIP="1:1${flowid}"                                         #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x80080000 0xc03f0000" ] ; then                       #Gaming
                         eval "Cat${flowid}DownBandPercent=${Gaming_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${Gaming_UpBandPercent}"
                         Gaming="1:1${flowid}"                                       #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x800a0000 0xc03f0000" ] ; then                       #Others
                         eval "Cat${flowid}DownBandPercent=${Others_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${Others_UpBandPercent}"
                         Others="1:1${flowid}"                                       #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x800d0000 0xc03f0000" ] ; then                       #Web Surfing
                         eval "Cat${flowid}DownBandPercent=${WebSurfing_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${WebSurfing_UpBandPercent}"
                         Web="1:1${flowid}"                                          #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x80040000 0xc03f0000" ] ; then                       #Streaming
                         eval "Cat${flowid}DownBandPercent=${Video_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${Video_UpBandPercent}"
                         Streaming="1:1${flowid}"                                    #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x80030000 0xc03f0000" ] ; then                       #Downloads
                         eval "Cat${flowid}DownBandPercent=${FileTransfer_DownBandPercent}"
                         eval "Cat${flowid}UpBandPercent=${FileTransfer_UpBandPercent}"
                         Downloads="1:1${flowid}"                                    #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                   
+                    
                     if [ "${mark}" = "0x80000000 0xc000ffff" ] ; then                       #Default (Unidentified traffic)
                         Default="1:1${flowid}"                                      #Use this variable for custom QOS rule flowID (case sensitive)
                     fi
-                       
+                        
             fi
     done <<EOF
         $(${tc} filter show dev br0 | grep -o "flowid.*" -A1 | sed '/^--$/d')
 EOF
-   
+    
     Cat0DownBandPercent=${NetControl_DownBandPercent}
     Cat0UpBandPercent=${NetControl_UpBandPercent}
- 
+
     Cat7DownBandPercent=${Default_DownBandPercent}
     Cat7UpBandPercent=${Default_UpBandPercent}
-   
+    
     ############################### Unidentified Traffic Priority & Custom Rules ##########################
-   
+    
      
-    if [ "${Default}" != "1:117" ] ; then
+    if [ "${Default}" = "1:117" ] ; then
         logger -st "Adaptive QOS" "[INFO] Changing container for Unidentified Traffic & Applying Custom Rules"
- 
+
         VOIP_mark="0x40060001"          #Note these marks are same as filter match/mask combo but have a 1 at the end.  That trailing one prevents the filters from being caught by unidentified mask
         Gaming_mark="0x40080001"
         Others_mark="0x400a0001"
@@ -151,38 +151,40 @@ EOF
         Streaming_mark="0x40040001"
         Downloads_mark="0x40030001"
         Default_mark="0x40000001"
- 
+
         ####################  Custom Rules Setup #####################
-       
+        
         ${tc} filter del dev br0 parent 1: prio 2                                                                   #Deletes rule routing unidentified traffic into "Default" traffic container
             ##DOWNLOAD (INCOMMING TRAFFIC) CUSTOM RULES START HERE
-            ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 500 0xffff flowid ${VOIP}               #Wifi Calling   (All incomming traffic w/ LAN destination port 500              goes to "VOIP" Traffic Container)                              
+            ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 500 0xffff flowid ${VOIP}               #Wifi Calling   (All incomming traffic w/ LAN destination port 500              goes to "VOIP" Traffic Container)                               
             ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 4500 0xffff flowid ${VOIP}              #Wifi Calling   (All incomming traffic w/ LAN destination port 4500             goes to "VOIP" Traffic Container)
-            ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 16384 0xffe0 flowid ${VOIP}             #Facetime       (All incomming traffic w/ LAN destination ports 16384 - 16415   goes to "VOIP" Traffic Container)
-            # Google HTTPS filter seems to be required - this is actually moving NET CONTROL to web service level                                                         
-            ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80140000 0x803f0000 flowid ${Web}     
+            ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 16384 0xffe0 flowid ${VOIP}             #Facetime       (All incomming traffic w/ LAN destination ports 16384 - 16415   goes to "VOIP" Traffic Container) 
             ##DOWNLOAD (INCOMMING TRAFFIC) CUSTOM RULES END HERE
-        ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 0x8000ffff flowid ${Others}          #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container      
- 
-           
+        ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 0x8000ffff flowid ${Others}          #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container       
+        ${tc} filter del dev br0 parent 1: prio 22                                                                  #delete ASUS traffic rule that routes HTTPS traffic into "Net Control"
+        ${tc} filter add dev br0 protocol all prio 22 u32 match mark 0x80130000 0xc03f0000 flowid ${Web}            #create https traffic that routes HTTPS traffic into "Web Surfing"
+	# Consider enabling the following as well
+	# ${tc} filter add dev br0 protocol all prio 22 u32 match mark 0x80140000 0x803f0000 flowid ${Web} 
+            
         ${tc} filter del dev eth0 parent 1: prio 2                                                                  #Deletes rule routing unidentified traffic into "Default" traffic container
-            ##UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES START HERE                                            
-            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 500 0xffff flowid ${VOIP}              #Wifi Calling   (All outgoing traffic w/ LAN source port 500                goes to "VOIP" Traffic Container)                                      
-            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 4500 0xffff flowid ${VOIP}             #Wifi Calling   (All outgoing traffic w/ LAN source port 4500               goes to "VOIP" Traffic Container)
-            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 16384 0xffe0 flowid ${VOIP}            #Facetime       (All outgoing traffic w/ LAN source ports 16384 - 16415     goes to "VOIP" Traffic Container)
-            # Google HTTPS filter seems to be required - this is actually moving NET CONTROL to web service level
-            ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40140000 0x403f0000 flowid ${Web}
+            ##UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES START HERE                                             
+            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 500 0xffff flowid ${VOIP}              #Wifi Calling   (All outgoing traffic w/ LAN source port 500                goes to "VOIP" Traffic Container)                                       
+            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 4500 0xffff flowid ${VOIP}             #Wifi Calling   (All outgoing traffic w/ LAN source port 4500               goes to "VOIP" Traffic Container) 
+            ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 16384 0xffe0 flowid ${VOIP}            #Facetime       (All outgoing traffic w/ LAN source ports 16384 - 16415     goes to "VOIP" Traffic Container) 
+            ##UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES END HERE                                               
+        ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 0x4000ffff flowid ${Others}         #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container       
+        ${tc} filter del dev eth0 parent 1: prio 22                                                                 #delete ASUS traffic rule that routes HTTPS traffic into "Net Control"
+        ${tc} filter add dev eth0 protocol all prio 22 u32 match mark 0x40130000 0xc03f0000 flowid ${Web}           #create https traffic that routes HTTPS traffic into "Web Surfing"
+	# Consider enabling the following as well
+	# ${tc} filter add dev eth0 protocol all prio 22 u32 match mark 0x40140000 0x403f0000 flowid ${Web}
 
-            ##UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES END HERE                                              
-        ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 0x4000ffff flowid ${Others}         #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container      
- 
      
     ######################## Minimum Alotted Bandwidth Per QOS Catagory ##########################
-   
-   
+    
+    
         DownCeil="$(printf "%.0f" $(nvram get qos_ibw))"                                                            #Maximum download rate defined in WebUI
         UpCeil="$(printf "%.0f" $(nvram get qos_obw))"
-       
+
         DownRate0="$(expr ${DownCeil} \* ${Cat0DownBandPercent} / 100)"                                         #New rates that correspond to user defined percentages above
         DownRate1="$(expr ${DownCeil} \* ${Cat1DownBandPercent} / 100)"
         DownRate2="$(expr ${DownCeil} \* ${Cat2DownBandPercent} / 100)"
@@ -191,7 +193,7 @@ EOF
         DownRate5="$(expr ${DownCeil} \* ${Cat5DownBandPercent} / 100)"
         DownRate6="$(expr ${DownCeil} \* ${Cat6DownBandPercent} / 100)"
         DownRate7="$(expr ${DownCeil} \* ${Cat7DownBandPercent} / 100)"
- 
+
         UpRate0="$(expr ${UpCeil} \* ${Cat0UpBandPercent} / 100)"
         UpRate1="$(expr ${UpCeil} \* ${Cat1UpBandPercent} / 100)"
         UpRate2="$(expr ${UpCeil} \* ${Cat2UpBandPercent} / 100)"
@@ -200,102 +202,102 @@ EOF
         UpRate5="$(expr ${UpCeil} \* ${Cat5UpBandPercent} / 100)"
         UpRate6="$(expr ${UpCeil} \* ${Cat6UpBandPercent} / 100)"
         UpRate7="$(expr ${UpCeil} \* ${Cat7UpBandPercent} / 100)"
-       
- 
+        
+
         logger -st "Adaptive QOS" "[INFO] Changing minimum alloted bandwidth per QOS category to user defined percentages"
- 
+
             #read existing burst/cburst per download QOS class
-            while read -r line;                                                                        
+            while read -r line;                                                                         
             do
-                if [ "$( echo ${line} | sed -n -e 's/.*1:10 //p' )" != "" ] ; then                                                     
+                if [ "$( echo ${line} | sed -n -e 's/.*1:10 //p' )" != "" ] ; then                                                      
                     DownBurst0=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst0=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
-               
-                if [ "$( echo ${line} | sed -n -e 's/.*1:11 //p' )" != "" ] ; then                                                     
+                
+                if [ "$( echo ${line} | sed -n -e 's/.*1:11 //p' )" != "" ] ; then                                                      
                     DownBurst1=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst1=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
-               
-                if [ "$( echo ${line} | sed -n -e 's/.*1:12 //p' )" != "" ] ; then                                                     
+                
+                if [ "$( echo ${line} | sed -n -e 's/.*1:12 //p' )" != "" ] ; then                                                      
                     DownBurst2=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst2=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:13 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:13 //p' )" != "" ] ; then                                                      
                     DownBurst3=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst3=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:14 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:14 //p' )" != "" ] ; then                                                      
                     DownBurst4=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst4=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:15 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:15 //p' )" != "" ] ; then                                                      
                     DownBurst5=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst5=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:16 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:16 //p' )" != "" ] ; then                                                      
                     DownBurst6=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst6=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
-                fi             
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:17 //p' )" != "" ] ; then                                                     
+                fi              
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:17 //p' )" != "" ] ; then                                                      
                     DownBurst7=$( echo ${line} | sed -n -e 's/.* burst \([a-zA-z0-9]*\).*/\1/p' )
                     DownCburst7=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
-                fi             
+                fi              
             done <<EOF
                 $( tc class show dev br0 | grep " 1:1" )
 EOF
- 
+
             #read existing burst/cburst per upload QOS class
-            while read -r line;                                                                        
+            while read -r line;                                                                         
             do
-                if [ "$( echo ${line} | sed -n -e 's/.*1:10 //p' )" != "" ] ; then                                                     
+                if [ "$( echo ${line} | sed -n -e 's/.*1:10 //p' )" != "" ] ; then                                                      
                     UpBurst0=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst0=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
-               
-                if [ "$( echo ${line} | sed -n -e 's/.*1:11 //p' )" != "" ] ; then                                                     
+                
+                if [ "$( echo ${line} | sed -n -e 's/.*1:11 //p' )" != "" ] ; then                                                      
                     UpBurst1=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst1=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
-               
-                if [ "$( echo ${line} | sed -n -e 's/.*1:12 //p' )" != "" ] ; then                                                     
+                
+                if [ "$( echo ${line} | sed -n -e 's/.*1:12 //p' )" != "" ] ; then                                                      
                     UpBurst2=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst2=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:13 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:13 //p' )" != "" ] ; then                                                      
                     UpBurst3=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst3=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:14 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:14 //p' )" != "" ] ; then                                                      
                     UpBurst4=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst4=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:15 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:15 //p' )" != "" ] ; then                                                      
                     UpBurst5=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst5=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
                 fi
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:16 //p' )" != "" ] ; then                                                     
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:16 //p' )" != "" ] ; then                                                      
                     UpBurst6=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst6=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
-                fi             
- 
-                if [ "$( echo ${line} | sed -n -e 's/.*1:17 //p' )" != "" ] ; then                                                     
+                fi              
+
+                if [ "$( echo ${line} | sed -n -e 's/.*1:17 //p' )" != "" ] ; then                                                      
                     UpBurst7=$( echo ${line} | sed -n -e 's/.*burst \([a-zA-z0-9]*\).*/\1/p' )
                     UpCburst7=$( echo ${line} | sed -n -e 's/.*cburst \([a-zA-z0-9]*\).*/\1/p' )
-                fi             
+                fi              
             done <<EOF
                 $( tc class show dev eth0 | grep " 1:1" )
 EOF
- 
+
         tc class change dev br0 parent 1:1 classid 1:10 htb prio 0 rate ${DownRate0}Kbit ceil ${DownCeil}Kbit burst ${DownBurst0} cburst ${DownCburst0}
         tc class change dev br0 parent 1:1 classid 1:11 htb prio 1 rate ${DownRate1}Kbit ceil ${DownCeil}Kbit burst ${DownBurst1} cburst ${DownCburst1}
         tc class change dev br0 parent 1:1 classid 1:12 htb prio 2 rate ${DownRate2}Kbit ceil ${DownCeil}Kbit burst ${DownBurst2} cburst ${DownCburst2}
@@ -304,8 +306,8 @@ EOF
         tc class change dev br0 parent 1:1 classid 1:15 htb prio 5 rate ${DownRate5}Kbit ceil ${DownCeil}Kbit burst ${DownBurst5} cburst ${DownCburst5}
         tc class change dev br0 parent 1:1 classid 1:16 htb prio 6 rate ${DownRate6}Kbit ceil ${DownCeil}Kbit burst ${DownBurst6} cburst ${DownCburst6}
         tc class change dev br0 parent 1:1 classid 1:17 htb prio 7 rate ${DownRate7}Kbit ceil ${DownCeil}Kbit burst ${DownBurst7} cburst ${DownCburst7}
-       
- 
+        
+
         tc class change dev eth0 parent 1:1 classid 1:10 htb prio 0 rate ${UpRate0}Kbit ceil ${UpCeil}Kbit burst ${UpBurst0} cburst ${UpCburst0}
         tc class change dev eth0 parent 1:1 classid 1:11 htb prio 1 rate ${UpRate1}Kbit ceil ${UpCeil}Kbit burst ${UpBurst1} cburst ${UpCburst1}
         tc class change dev eth0 parent 1:1 classid 1:12 htb prio 2 rate ${UpRate2}Kbit ceil ${UpCeil}Kbit burst ${UpBurst2} cburst ${UpCburst2}
@@ -321,6 +323,7 @@ EOF
     logger -st "Adaptive QOS" "[INFO] Done."
 else
     logger -st "Adaptive QOS" "[INFO] Nothing to do, QOS not enabled."
-fi 
- 
+fi  
+
 rm -rf /tmp/qos.lock
+
