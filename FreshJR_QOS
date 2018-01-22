@@ -141,7 +141,7 @@ EOF
     ############################### Unidentified Traffic Priority & Custom Rules ##########################
     
      
-    if [ "${Default}" = "1:117" ] ; then
+    if [ "${Default}" = "1:17" ] ; then
         logger -st "Adaptive QOS" "[INFO] Changing container for Unidentified Traffic & Applying Custom Rules"
 
         VOIP_mark="0x40060001"          #Note these marks are same as filter match/mask combo but have a 1 at the end.  That trailing one prevents the filters from being caught by unidentified mask
