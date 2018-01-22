@@ -159,6 +159,8 @@ EOF
             ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 500 0xffff flowid ${VOIP}               #Wifi Calling   (All incomming traffic w/ LAN destination port 500              goes to "VOIP" Traffic Container)                              
             ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 4500 0xffff flowid ${VOIP}              #Wifi Calling   (All incomming traffic w/ LAN destination port 4500             goes to "VOIP" Traffic Container)
             ${tc} filter add dev br0 protocol all prio 2 u32 match ip dport 16384 0xffe0 flowid ${VOIP}             #Facetime       (All incomming traffic w/ LAN destination ports 16384 - 16415   goes to "VOIP" Traffic Container)
+            # Google HTTPS filter seems to be required - this is actually moving NET CONTROL to web service level                                                         
+            ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80140000 0x803f0000 flowid ${Web}     
             ##DOWNLOAD (INCOMMING TRAFFIC) CUSTOM RULES END HERE
         ${tc} filter add dev br0 protocol all prio 2 u32 match mark 0x80000000 0x8000ffff flowid ${Others}          #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container      
  
@@ -168,6 +170,9 @@ EOF
             ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 500 0xffff flowid ${VOIP}              #Wifi Calling   (All outgoing traffic w/ LAN source port 500                goes to "VOIP" Traffic Container)                                      
             ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 4500 0xffff flowid ${VOIP}             #Wifi Calling   (All outgoing traffic w/ LAN source port 4500               goes to "VOIP" Traffic Container)
             ${tc} filter add dev eth0 protocol all prio 2 u32 match ip sport 16384 0xffe0 flowid ${VOIP}            #Facetime       (All outgoing traffic w/ LAN source ports 16384 - 16415     goes to "VOIP" Traffic Container)
+            # Google HTTPS filter seems to be required - this is actually moving NET CONTROL to web service level
+            ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40140000 0x403f0000 flowid ${Web}
+
             ##UPLOAD (OUTGOING TRAFFIC) CUSTOM RULES END HERE                                              
         ${tc} filter add dev eth0 protocol all prio 2 u32 match mark 0x40000000 0x4000ffff flowid ${Others}         #Creates rule routing unidentified traffic into "Others" traffic container which user adjustable in webUI, instead of default reouting pf traffoc into non adjustable "Default" traffic container      
  
